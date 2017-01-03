@@ -29,7 +29,7 @@ for _ in xrange(10000):
         # considered solved if the agent lasts 200 timesteps
         if reward == 200:
             print 'solved'
-            env = wrappers.Monitor(env, '/tmp/cartpole-experiment-1', force=True)
+            # env = wrappers.Monitor(env, '/tmp/cartpole-experiment-1', force=True)
             for j in xrange(100):
                 reward = run_episode(env, bestparams)
                 print j, reward

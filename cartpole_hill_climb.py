@@ -38,3 +38,5 @@ for _ in xrange(10000):
                 reward = run_episode(env, parameters)
                 print j, reward
             break
+    else :
+        noise_scaling += 0.05
