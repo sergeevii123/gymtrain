@@ -4,6 +4,7 @@ from gym import wrappers
 import tensorflow as tf
 env = gym.make('CartPole-v0')
 # env = wrappers.Monitor(env, '/tmp/cartpole-experiment-1', force=True)
+epsilon = 1e-3
 
 def policy_gradient():
     with tf.variable_scope("policy"):
@@ -23,15 +24,29 @@ def value_gradient():
     with tf.variable_scope("value"):
         state = tf.placeholder("float",[None,4])
         newvals = tf.placeholder("float",[None,1])
-        w1 = tf.get_variable("w1",[4,10])
-        b1 = tf.get_variable("b1",[10])
-        h1 = tf.nn.relu(tf.matmul(state,w1) + b1)
-        w2 = tf.get_variable("w2",[10,1])
-        b2 = tf.get_variable("b2",[1])
-        calculated = tf.matmul(h1,w2) + b2
+        # actually having fun with big nn for simple task
+        w1 = tf.get_variable("w1",[4,8])
+        b1 = tf.get_variable("b1",[8])
+        h1 = tf.nn.relu(tf.matmul(state, w1) + b1)
+        hd1 = tf.nn.dropout(h1, 0.5)
+        batch_mean1, batch_var1 = tf.nn.moments(hd1, [0])
+        scale1 = tf.Variable(tf.ones([8]))
+        beta1 = tf.Variable(tf.zeros([8]))
+        BN1 = tf.nn.batch_normalization(hd1, batch_mean1, batch_var1, beta1, scale1, epsilon)
+        w2 = tf.get_variable("w2",[8,8])
+        b2 = tf.get_variable("b2",[8])
+        h2 = tf.nn.relu(tf.matmul(BN1, w2) + b2)
+        hd2 = tf.nn.dropout(h2, 0.5)
+        batch_mean2, batch_var2 = tf.nn.moments(hd2, [0])
+        scale2 = tf.Variable(tf.ones([8]))
+        beta2 = tf.Variable(tf.zeros([8]))
+        BN2 = tf.nn.batch_normalization(hd2, batch_mean2, batch_var2, beta2, scale2, epsilon)
+        w3 = tf.get_variable("w3", [8, 1])
+        b3 = tf.get_variable("b3", [1])
+        calculated = tf.matmul(BN2,w3) + b3
         diffs = calculated - newvals
         loss = tf.nn.l2_loss(diffs)
-        optimizer = tf.train.AdamOptimizer(0.1).minimize(loss)
+        optimizer = tf.train.AdamOptimizer(0.01).minimize(loss)
         return calculated, state, newvals, optimizer, loss
 
 def run_episode(env, policy_grad, value_grad, sess):
@@ -64,6 +79,7 @@ def run_episode(env, policy_grad, value_grad, sess):
 
         if done:
             break
+
     for index, trans in enumerate(transitions):
         obs, action, reward = trans
 
@@ -98,21 +114,23 @@ policy_grad = policy_gradient()
 value_grad = value_gradient()
 sess = tf.InteractiveSession()
 sess.run(tf.global_variables_initializer())
-episodes_per_update = 10
-for i in xrange(2000):
+episodes_per_update = 20
+
+for epoch in xrange(1000):
     # reward = run_episode(env, policy_grad, value_grad, sess)
     reward = 0
     for k in xrange(episodes_per_update):
         run = run_episode(env, policy_grad, value_grad, sess)
         reward += run
-    print i, reward
-    if reward == 2000:
-        print "reward 2000"
-        print i
+    print epoch, reward / (200 * episodes_per_update)
+    if reward == 200 * episodes_per_update:
+        print "reward", 200 * episodes_per_update
+        print epoch
         break
 t = 0
 for _ in xrange(100):
     reward = run_episode(env, policy_grad, value_grad, sess)
     print _, reward
     t += reward
-print t / 1000
+print "mean score", t / 100
+# 134.96
