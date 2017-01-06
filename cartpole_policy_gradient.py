@@ -1,12 +1,10 @@
 import gym
 import numpy as np
-import matplotlib.pyplot as plt
 import tensorflow as tf
-import random
 from gym import wrappers
 
 env = gym.make('CartPole-v0')
-env = wrappers.Monitor(env, '/tmp/cartpole-experiment-1', force=True)
+# env = wrappers.Monitor(env, '/tmp/cartpole-experiment-1', force=True)
 epsilon = 1e-3
 
 def policy_gradient():
@@ -15,12 +13,6 @@ def policy_gradient():
     advantage = tf.placeholder(dtype=tf.float32, shape=(None, 1))
 
     w1 = tf.Variable(tf.zeros([4, 2]))
-    # b1 = tf.Variable(tf.zeros([4]))
-    # h1 = tf.nn.relu(tf.matmul(state, w1) + b1)
-
-    # w2 = tf.Variable(tf.random_normal([4, 2]))
-    # b2 = tf.Variable(tf.zeros([2]))
-    # est_probs = tf.nn.softmax(tf.matmul(state, w2) + b2)
     est_probs = tf.nn.softmax(tf.matmul(state, w1))
 
     acc = tf.reduce_sum(tf.mul(est_probs, actions), reduction_indices=[1])
@@ -38,10 +30,6 @@ def value_gradient():
     w1 = tf.Variable(tf.random_normal([4, 10]))
     b1 = tf.Variable(tf.zeros([10]))
     h1 = tf.nn.relu(tf.matmul(state, w1) + b1)
-    #
-    # w2 = tf.Variable(tf.random_normal([10, 10]))
-    # b2 = tf.Variable(tf.zeros([10]))
-    # h2 = tf.nn.relu(tf.matmul(h1, w2) + b2)
 
     w2 = tf.Variable(tf.random_normal([10, 1]))
     b2 = tf.Variable(tf.zeros([1]))
@@ -124,34 +112,3 @@ for epoch in xrange(10000):
         for i in reward_hist[-100:]:
             print i
         break
-        # t = 0.
-        # statesF = []
-        # actionsF = []
-        # transitionsF = []
-        # # env = wrappers.Monitor(env, '/tmp/cartpole-experiment-1', force=True)
-        # obs = env.reset()
-        # i = 0
-        # while i < 100:
-        #     for _ in xrange(200):
-        #         probsF = sess.run(policy_action_est, feed_dict={policy_state_var: obs.reshape((1, obs.shape[0]))})
-        #
-        #         actionF = 0 if np.random.rand() < probsF[0][0] else 1
-        #
-        #         action_arrF = np.zeros(2)
-        #         action_arrF[actionF] = 1.0
-        #
-        #         next_obsF, rewardF, doneF, _ = env.step(actionF)
-        #         if doneF:
-        #             i+=1
-        #             obs = env.reset()
-        #             break
-        #         # env.render()
-        #         statesF.append(obs)
-        #         actionsF.append(action_arrF)
-        #         transitionsF.append((next_obsF, rewardF, doneF))
-        #
-        #         obs = next_obsF
-        #         t += rewardF
-        #
-        # print t/100
-        # break
