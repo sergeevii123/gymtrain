@@ -170,7 +170,7 @@ class Worker():
         episode_count = sess.run(self.global_episodes)
         total_steps = 0
         curre = 0
-        print "Starting worker " + str(self.number)
+        print("Starting worker " + str(self.number))
         with sess.as_default(), sess.graph.as_default():
             while not coord.should_stop():
                 sess.run(self.update_local_ops)
@@ -229,17 +229,17 @@ class Worker():
                 self.episode_mean_values.append(np.mean(episode_values))
 
                 if self.create_submission:
-                    print np.mean(self.episode_rewards[-100:])
+                    print(np.mean(self.episode_rewards[-100:]))
                 else:
                     # print "worker", str(self.number), "ended episode", curre, "random/norm",random_a, norm_a, "reward", episode_reward
-                    print "worker", str(self.number), "ended episode", curre, "reward", episode_reward
+                    print("worker", str(self.number), "ended episode", curre, "reward", episode_reward)
 
                 if len(episode_buffer) != 0 and self.create_submission != True:
                     v_l, p_l, e_l, g_n, v_n = self.train(episode_buffer, sess, gamma, 0.0)
 
                 if episode_count != 0 and episode_count % 10 == 0 and self.name == 'worker_0' and self.create_submission != True:
                     saver.save(sess, self.model_path + '/model-' + str(episode_count) + '.cptk')
-                    print "Saved Model"
+                    print("Saved Model")
                     mean_reward = np.mean(self.episode_rewards[-5:])
                     mean_length = np.mean(self.episode_lengths[-5:])
                     mean_value = np.mean(self.episode_mean_values[-5:])
@@ -291,7 +291,7 @@ saver = tf.train.Saver(max_to_keep=5)
 with tf.Session() as sess:
     coord = tf.train.Coordinator()
     if load_model == True:
-        print 'Loading Model...'
+        print('Loading Model...')
         ckpt = tf.train.get_checkpoint_state(model_path)
         saver.restore(sess, ckpt.model_checkpoint_path)
     else:

@@ -25,6 +25,7 @@ def train(rank, args, shared_model, optimizer=None):
     env.seed(args.seed + rank)
 
     model = ActorCritic(env.observation_space.shape[0], env.action_space)
+    model = model.cuda()
 
     if optimizer is None:
         optimizer = optim.Adam(shared_model.parameters(), lr=args.lr)
@@ -33,6 +34,7 @@ def train(rank, args, shared_model, optimizer=None):
 
     state = env.reset()
     state = torch.from_numpy(state)
+    state = state.cuda()
     done = True
 
     episode_length = 0
@@ -46,6 +48,9 @@ def train(rank, args, shared_model, optimizer=None):
         else:
             cx = Variable(cx.data)
             hx = Variable(hx.data)
+
+        hx = hx.cuda()
+        cx = cx.cuda()
 
         values = []
         log_probs = []

@@ -15,7 +15,7 @@ def policy_gradient():
     w1 = tf.Variable(tf.zeros([4, 2]))
     est_probs = tf.nn.softmax(tf.matmul(state, w1))
 
-    acc = tf.reduce_sum(tf.mul(est_probs, actions), reduction_indices=[1])
+    acc = tf.reduce_sum(tf.multiply(est_probs, actions), reduction_indices=[1])
     log_probs = tf.log(acc)
     loss = -tf.reduce_sum(log_probs * advantage, reduction_indices=[1])
     optimizer = tf.train.AdamOptimizer(0.1).minimize(loss)
