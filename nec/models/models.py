@@ -17,7 +17,7 @@ class AtariDQN(nn.Module):
     self.initialize_weights()
 
   def initialize_weights(self):
-    conv_layers = [v for k,v in self._modules.iteritems() if 'conv' in k]
+    conv_layers = [v for k,v in self._modules.items() if 'conv' in k]
     for layer in conv_layers:
       init.xavier_uniform(layer.weight)
     init.xavier_uniform(self.head.weight)
@@ -40,7 +40,7 @@ class CartPoleDQN(nn.Module):
     self.head = nn.Linear(448, embedding_size)
 
   def initialize_weights(self):
-    conv_layers = [v for k,v in self._modules.iteritems() if 'conv' in k]
+    conv_layers = [v for k,v in self._modules.items() if 'conv' in k]
     for layer in conv_layers:
       init.xavier_uniform(layer.weight)
     init.xavier_uniform(self.head.weight)

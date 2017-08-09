@@ -13,7 +13,7 @@ import math
 import torch
 from collections import deque
 from functools import wraps
-from bounded_priority_queue import BoundedPriorityQueue
+from utils.bounded_priority_queue import BoundedPriorityQueue
 from torch.autograd import Variable
 
 __author__ = u'Stefan Kögl <stefan@skoegl.net>'
