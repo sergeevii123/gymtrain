@@ -55,9 +55,9 @@ if __name__ == '__main__':
     env = create_atari_env(args.env_name)
     model = ActorCritic(
         env.observation_space.shape[0], env.action_space)
-
     if args.cuda:
         model.cuda()
+        model = torch.nn.DataParallel(model, device_ids=[0, 1])
 
     model.share_memory()
 
