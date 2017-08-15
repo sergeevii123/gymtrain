@@ -25,6 +25,7 @@ def train(rank, args, shared_model, optimizer=None):
     env.seed(args.seed + rank)
 
     model = ActorCritic(env.observation_space.shape[0], env.action_space)
+    model = torch.nn.DataParallel(model, device_ids=[0, 1]).cuda()
 
     if optimizer is None:
         optimizer = optim.Adam(shared_model.parameters(), lr=args.lr)
@@ -63,7 +64,7 @@ def train(rank, args, shared_model, optimizer=None):
             action = prob.multinomial().data
             log_prob = log_prob.gather(1, Variable(action))
 
-            state, reward, done, _ = env.step(action.numpy())
+            state, reward, done, _ = env.step(action.cpu().numpy())
             done = done or episode_length >= args.max_episode_length
             reward = max(min(reward, 1), -1)
 
@@ -84,23 +85,21 @@ def train(rank, args, shared_model, optimizer=None):
             value, _, _ = model((Variable(state.unsqueeze(0)), (hx, cx)))
             R = value.data
 
-        values.append(Variable(R))
+        values.append(Variable(R).cuda())
         policy_loss = 0
         value_loss = 0
-        R = Variable(R)
-        gae = torch.zeros(1, 1)
+        R = Variable(R).cuda()
+        gae = torch.zeros(1).cuda()
         for i in reversed(range(len(rewards))):
             R = args.gamma * R + rewards[i]
             advantage = R - values[i]
             value_loss = value_loss + 0.5 * advantage.pow(2)
 
-            # Generalized Advantage Estimataion
-            delta_t = rewards[i] + args.gamma * \
-                values[i + 1].data - values[i].data
+            # Generalized Advantage Estimation
+            delta_t = rewards[i] + args.gamma * values[i + 1].data - values[i].data
             gae = gae * args.gamma * args.tau + delta_t
 
-            policy_loss = policy_loss - \
-                log_probs[i] * Variable(gae) - 0.01 * entropies[i]
+            policy_loss = policy_loss - log_probs[i] * Variable(gae) - 0.01 * entropies[i]
 
         optimizer.zero_grad()
 

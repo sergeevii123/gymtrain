@@ -20,7 +20,8 @@ def test(rank, args, shared_model):
     env.seed(args.seed + rank)
 
     model = ActorCritic(env.observation_space.shape[0], env.action_space)
-
+    model = torch.nn.DataParallel(model, device_ids=[0, 1]).cuda()
+    
     model.eval()
 
     state = env.reset()
@@ -47,14 +48,14 @@ def test(rank, args, shared_model):
         value, logit, (hx, cx) = model(
             (Variable(state.unsqueeze(0), volatile=True), (hx, cx)))
         prob = F.softmax(logit)
-        action = prob.max(1)[1].data.numpy()
+        action = prob.max(1)[1].data.cpu().numpy()
 
-        state, reward, done, _ = env.step(action[0, 0])
+        state, reward, done, _ = env.step(action[0])
         done = done or episode_length >= args.max_episode_length
         reward_sum += reward
 
         # a quick hack to prevent the agent from stucking
-        actions.append(action[0, 0])
+        actions.append(action[0])
         if actions.count(actions[0]) == actions.maxlen:
             done = True
 

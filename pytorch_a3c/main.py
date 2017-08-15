@@ -33,12 +33,10 @@ parser.add_argument('--num-steps', type=int, default=20, metavar='NS',
                     help='number of forward steps in A3C (default: 20)')
 parser.add_argument('--max-episode-length', type=int, default=10000, metavar='M',
                     help='maximum length of an episode (default: 10000)')
-parser.add_argument('--env-name', default='SpaceInvaders-v0', metavar='ENV',
-                    help='environment to train on (default: SpaceInvaders-v0)')
+parser.add_argument('--env-name', default='PongDeterministic-v3', metavar='ENV',
+                    help='environment to train on (default: PongDeterministic-v3)')
 parser.add_argument('--no-shared', default=False, metavar='O',
                     help='use an optimizer without shared momentum.')
-parser.add_argument('--no-cuda', action='store_true', default=False,
-                    help='disables CUDA training')
 
 
 if __name__ == '__main__':
@@ -46,37 +44,29 @@ if __name__ == '__main__':
   
     args = parser.parse_args()
 
-    args.cuda = not args.no_cuda and torch.cuda.is_available()
-
     torch.manual_seed(args.seed)
-    if args.cuda:
-        torch.cuda.manual_seed(args.seed)
 
     env = create_atari_env(args.env_name)
-    model = ActorCritic(
-        env.observation_space.shape[0], env.action_space)
-    if args.cuda:
-        model.cuda()
-        model = torch.nn.DataParallel(model, device_ids=[0, 1])
+    shared_model = ActorCritic(env.observation_space.shape[0], env.action_space)
+    shared_model = torch.nn.DataParallel(shared_model, device_ids=[0, 1]).cuda()
+    shared_model.share_memory()
 
-    model.share_memory()
 
     if args.no_shared:
         optimizer = None
     else:
-        optimizer = my_optim.SharedAdam(model.parameters(), lr=args.lr)
-        # if args.cuda:
-        #     optimizer.cuda()
+        optimizer = my_optim.SharedAdam(shared_model.parameters(), lr=args.lr)
         optimizer.share_memory()
 
     processes = []
-
-    p = mp.Process(target=test, args=(args.num_processes, args, model))
+    ctx = mp.get_context('spawn')
+    p = ctx.Process(target=test, args=(args.num_processes, args, shared_model))
+    
     p.start()
     processes.append(p)
 
     for rank in range(0, args.num_processes):
-        p = mp.Process(target=train, args=(rank, args, model, optimizer))
+        p = ctx.Process(target=train, args=(rank, args, shared_model, optimizer))
         p.start()
         processes.append(p)
     for p in processes:

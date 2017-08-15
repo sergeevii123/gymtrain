@@ -10,7 +10,7 @@ from torch.autograd import Variable
 
 def normalized_columns_initializer(weights, std=1.0):
     out = torch.randn(weights.size())
-    out *= std / torch.sqrt(out.pow(2).sum(1).expand_as(out))
+    out *= std / torch.sqrt(np.square(out).sum(0, True))
     return out
 
 
@@ -50,7 +50,9 @@ class ActorCritic(torch.nn.Module):
         self.apply(weights_init)
         self.actor_linear.weight.data = normalized_columns_initializer(
             self.actor_linear.weight.data, 0.01)
+        
         self.actor_linear.bias.data.fill_(0)
+        
         self.critic_linear.weight.data = normalized_columns_initializer(
             self.critic_linear.weight.data, 1.0)
         self.critic_linear.bias.data.fill_(0)
