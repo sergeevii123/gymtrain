@@ -4,39 +4,41 @@ import universe
 from gym.spaces.box import Box
 from universe import vectorized
 from universe.wrappers import Unvectorize, Vectorize
+from gym.wrappers import Monitor
 
 import cv2
 
 
-# Taken from https://github.com/openai/universe-starter-agent
-def create_atari_env(env_id):
+def create_atari_env(env_id, create_sub=False):
     env = gym.make(env_id)
     if len(env.observation_space.shape) > 1:
         env = Vectorize(env)
-        env = AtariRescale42x42(env)
+        env = AtariRescale84x84(env)
         env = NormalizedEnv(env)
         env = Unvectorize(env)
+    if create_sub:
+        self.env = Monitor(self.env, 'tmp/{}'.format(args.env_name), force=True)
     return env
 
 
-def _process_frame42(frame):
+def _process_frame84(frame):
     frame = frame[34:34 + 160, :160]
-    frame = cv2.resize(frame, (42, 42))
+    frame = cv2.resize(frame, (84, 84))
     frame = frame.mean(2)
     frame = frame.astype(np.float32)
     frame *= (1.0 / 255.0)
-    frame = np.reshape(frame, [1, 42, 42])
+    frame = np.reshape(frame, [1, 84, 84])
     return frame
 
 
-class AtariRescale42x42(vectorized.ObservationWrapper):
+class AtariRescale84x84(vectorized.ObservationWrapper):
 
     def __init__(self, env=None):
-        super(AtariRescale42x42, self).__init__(env)
-        self.observation_space = Box(0.0, 1.0, [1, 42, 42])
+        super(AtariRescale84x84, self).__init__(env)
+        self.observation_space = Box(0.0, 1.0, [1, 84, 84])
 
     def _observation(self, observation_n):
-        return [_process_frame42(observation) for observation in observation_n]
+        return [_process_frame84(observation) for observation in observation_n]
 
 
 class NormalizedEnv(vectorized.ObservationWrapper):

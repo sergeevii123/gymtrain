@@ -25,7 +25,8 @@ def train(rank, args, shared_model, optimizer=None):
     env.seed(args.seed + rank)
 
     model = ActorCritic(env.observation_space.shape[0], env.action_space)
-    model = torch.nn.DataParallel(model, device_ids=[0, 1]).cuda()
+    model = torch.nn.DataParallel(model, device_ids=[0,1]).cuda()
+    
 
     if optimizer is None:
         optimizer = optim.Adam(shared_model.parameters(), lr=args.lr)

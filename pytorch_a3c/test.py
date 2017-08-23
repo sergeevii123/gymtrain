@@ -20,7 +20,7 @@ def test(rank, args, shared_model):
     env.seed(args.seed + rank)
 
     model = ActorCritic(env.observation_space.shape[0], env.action_space)
-    model = torch.nn.DataParallel(model, device_ids=[0, 1]).cuda()
+    model = torch.nn.DataParallel(model, device_ids=[0,1]).cuda()
     
     model.eval()
 
@@ -64,6 +64,8 @@ def test(rank, args, shared_model):
                 time.strftime("%Hh %Mm %Ss",
                               time.gmtime(time.time() - start_time)),
                 reward_sum, episode_length))
+            if not args.create_sub:
+                torch.save(model.state_dict(), 'weights/{}.pt'.format(args.env_name))
             reward_sum = 0
             episode_length = 0
             actions.clear()

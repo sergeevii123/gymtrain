@@ -36,12 +36,11 @@ class ActorCritic(torch.nn.Module):
 
     def __init__(self, num_inputs, action_space):
         super(ActorCritic, self).__init__()
-        self.conv1 = nn.Conv2d(num_inputs, 32, 3, stride=2, padding=1)
-        self.conv2 = nn.Conv2d(32, 32, 3, stride=2, padding=1)
-        self.conv3 = nn.Conv2d(32, 32, 3, stride=2, padding=1)
-        self.conv4 = nn.Conv2d(32, 32, 3, stride=2, padding=1)
+        self.conv1 = nn.Conv2d(num_inputs, 16, 8, stride=4)
+        self.conv2 = nn.Conv2d(16, 32, 4, stride=2)
+        self.conv3 = nn.Conv2d(32, 32, 4, stride=2)
 
-        self.lstm = nn.LSTMCell(32 * 3 * 3, 256)
+        self.lstm = nn.LSTMCell(32*3*3, 256)
 
         num_outputs = action_space.n
         self.critic_linear = nn.Linear(256, 1)
@@ -64,12 +63,13 @@ class ActorCritic(torch.nn.Module):
 
     def forward(self, inputs):
         inputs, (hx, cx) = inputs
+        # print(inputs.size())
         x = F.elu(self.conv1(inputs))
         x = F.elu(self.conv2(x))
         x = F.elu(self.conv3(x))
-        x = F.elu(self.conv4(x))
-
-        x = x.view(-1, 32 * 3 * 3)
+        # print(x.size())
+        x = x.view(-1, 32*3*3)
+        # print(x.size(),hx.size(),cx.size())
         hx, cx = self.lstm(x, (hx, cx))
         x = hx
 

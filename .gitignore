@@ -1,2 +1,5 @@
 model/
 modeltrain/
+*.pyc
+*.pyo
+.idea
