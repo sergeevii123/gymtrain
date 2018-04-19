@@ -1,3 +1,5 @@
 # gymtrain
 
-just some rl stuff
+Reinforce
+Monte Carlo Tree Search
+Asynchronous Advantage Actor Critic
