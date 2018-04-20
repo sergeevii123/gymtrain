@@ -24,26 +24,27 @@ parser.add_argument('--cont', action='store_true',
                     help='continue from weights')
 parser.add_argument('--record', action='store_true',
                     help='save video')
-parser.add_argument('--log-interval', type=int, default=1, metavar='N',
+parser.add_argument('--log-interval', type=int, default=10, metavar='N',
                     help='interval between training status logs (default: 10)')
 args = parser.parse_args()
 
 
 env = make_atari('SpaceInvaders-v0')
 env.seed(args.seed)
-if args.record:
-    env = wrappers.Monitor(env, './eval/reinforce', force=True)
+# if args.record:
+# env = wrappers.Monitor(env, './eval/reinforce', force=True)
 torch.manual_seed(args.seed)
 
 
 class Policy(nn.Module):
     def __init__(self, num_inputs, action_space):
         super(Policy, self).__init__()
-        self.conv1 = nn.Conv2d(num_inputs, 16, 3, stride=2, padding=1)
-        self.conv2 = nn.Conv2d(16, 32, 3, stride=2, padding=1)
-        self.conv3 = nn.Conv2d(32, 32, 3, stride=1, padding=1)
-        self.affine1 = nn.Linear(32*11*11, 128)
-        self.affine2 = nn.Linear(128, action_space)
+        self.conv1 = nn.Conv2d(num_inputs, 32, 3, stride=2, padding=1)
+        self.conv2 = nn.Conv2d(32, 32, 3, stride=2, padding=1)
+        self.conv3 = nn.Conv2d(32, 32, 3, stride=2, padding=1)
+        self.conv4 = nn.Conv2d(32, 32, 3, stride=2, padding=1)
+        self.affine1 = nn.Linear(32*3*3, 256)
+        self.affine2 = nn.Linear(256, action_space)
 
         self.saved_log_probs = []
         self.rewards = []
@@ -52,7 +53,8 @@ class Policy(nn.Module):
         x = F.elu(self.conv1(x))
         x = F.elu(self.conv2(x))
         x = F.elu(self.conv3(x))
-        x = x.view(-1, 32*11*11)
+        x = F.elu(self.conv4(x))
+        x = x.view(-1, 32*3*3)
         x = F.elu(self.affine1(x))
         action_scores = self.affine2(x)
         return F.softmax(action_scores, dim=1)

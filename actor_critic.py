@@ -42,12 +42,13 @@ SavedAction = namedtuple('SavedAction', ['log_prob', 'value'])
 class Policy(nn.Module):
     def __init__(self, num_inputs, action_space):
         super(Policy, self).__init__()
-        self.conv1 = nn.Conv2d(num_inputs, 16, 3, stride=2, padding=1)
-        self.conv2 = nn.Conv2d(16, 32, 3, stride=2, padding=1)
-        self.conv3 = nn.Conv2d(32, 32, 3, stride=1, padding=1)
-        self.affine1 = nn.Linear(32 * 11 * 11, 128)
-        self.action_head = nn.Linear(128, action_space)
-        self.value_head = nn.Linear(128, 1)
+        self.conv1 = nn.Conv2d(num_inputs, 32, 3, stride=2, padding=1)
+        self.conv2 = nn.Conv2d(32, 32, 3, stride=2, padding=1)
+        self.conv3 = nn.Conv2d(32, 32, 3, stride=2, padding=1)
+        self.conv4 = nn.Conv2d(32, 32, 3, stride=2, padding=1)
+        self.affine1 = nn.Linear(32 * 3 * 3, 256)
+        self.action_head = nn.Linear(256, action_space)
+        self.value_head = nn.Linear(256, 1)
 
         self.saved_actions = []
         self.rewards = []
@@ -56,7 +57,8 @@ class Policy(nn.Module):
         x = F.elu(self.conv1(x))
         x = F.elu(self.conv2(x))
         x = F.elu(self.conv3(x))
-        x = x.view(-1, 32 * 11 * 11)
+        x = F.elu(self.conv4(x))
+        x = x.view(-1, 32 * 3 * 3)
         x = F.elu(self.affine1(x))
         action_scores = self.action_head(x)
         state_values = self.value_head(x)
@@ -120,6 +122,6 @@ for i_episode in count(1):
     if i_episode % args.log_interval == 0:
         if current_reward > max_reward:
             max_reward = current_reward
-            # torch.save(model.state_dict(), 'weights/{}.pt'.format("actor_critic_invaders"))
+            torch.save(model.state_dict(), 'weights/{}.pt'.format("actor_critic_invaders"))
         print('Episode {}\tLast length: {:5d}\tAverage length: {:.2f}\tReward: {:.5f}'.format(
             i_episode, t, running_length, current_reward))
