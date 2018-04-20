@@ -1,5 +1,5 @@
-model/
-modeltrain/
+eval/
+weights/
 *.pyc
 *.pyo
 .idea
