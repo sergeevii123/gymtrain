@@ -10,6 +10,8 @@ import torch.optim as optim
 from torch.autograd import Variable
 from torch.distributions import Categorical
 from envs import make_atari
+import random
+from gym import wrappers
 
 parser = argparse.ArgumentParser(description='PyTorch REINFORCE example')
 parser.add_argument('--gamma', type=float, default=0.99, metavar='G',
@@ -18,13 +20,19 @@ parser.add_argument('--seed', type=int, default=42, metavar='N',
                     help='random seed (default: 42)')
 parser.add_argument('--render', action='store_true',
                     help='render the environment')
-parser.add_argument('--log-interval', type=int, default=10, metavar='N',
+parser.add_argument('--cont', action='store_true',
+                    help='continue from weights')
+parser.add_argument('--record', action='store_true',
+                    help='save video')
+parser.add_argument('--log-interval', type=int, default=1, metavar='N',
                     help='interval between training status logs (default: 10)')
 args = parser.parse_args()
 
 
 env = make_atari('SpaceInvaders-v0')
 env.seed(args.seed)
+if args.record:
+    env = wrappers.Monitor(env, './eval/reinforce', force=True)
 torch.manual_seed(args.seed)
 
 
@@ -53,11 +61,10 @@ def weights_init(m):
 class Policy(nn.Module):
     def __init__(self, num_inputs, action_space):
         super(Policy, self).__init__()
-        self.conv1 = nn.Conv2d(num_inputs, 16, 8, stride=4, padding=1)
-        self.conv2 = nn.Conv2d(16, 32, 4, stride=2, padding=1)
-        self.conv3 = nn.Conv2d(32, 32, 4, stride=2, padding=1)
-        self.conv4 = nn.Conv2d(32, 32, 2, stride=1, padding=1)
-        self.affine1 = nn.Linear(96*3, 128)
+        self.conv1 = nn.Conv2d(num_inputs, 16, 3, stride=2, padding=1)
+        self.conv2 = nn.Conv2d(16, 32, 3, stride=2, padding=1)
+        self.conv3 = nn.Conv2d(32, 32, 3, stride=1, padding=1)
+        self.affine1 = nn.Linear(32*11*11, 128)
         self.affine2 = nn.Linear(128, action_space)
 
         self.saved_log_probs = []
@@ -67,14 +74,13 @@ class Policy(nn.Module):
         x = F.elu(self.conv1(x))
         x = F.elu(self.conv2(x))
         x = F.elu(self.conv3(x))
-        x = F.elu(self.conv4(x))
-        x = x.view(-1, 96*3)
+        x = x.view(-1, 32*11*11)
         x = F.elu(self.affine1(x))
         action_scores = self.affine2(x)
         return F.softmax(action_scores, dim=1)
 
 policy = Policy(1, 6)
-optimizer = optim.Adam(policy.parameters(), lr=1e-2)
+optimizer = optim.Adam(policy.parameters(), lr=1e-3)
 
 
 def select_action(state):
@@ -104,23 +110,29 @@ def finish_episode():
     del policy.rewards[:]
     del policy.saved_log_probs[:]
 
+# if args.cont:
+# policy.load_state_dict(torch.load('weights/{}.pt'.format("reinforce_invaders")))
 
-
-running_reward = 10
+running_length = 10
+max_reward = 0
 for i_episode in count(1):
     state = env.reset()
-    for t in range(10000):  # Don't infinite loop while learning
-        print(state)
-        action = select_action(state)
+    current_reward = 0
+    for t in range(10000):
+        action = select_action(np.array(state))
         state, reward, done, _ = env.step(action)
-        if args.render:
-            env.render()
+        # if args.render:
+        env.render()
         policy.rewards.append(reward)
+        current_reward+=reward
         if done:
             break
 
-        running_reward = running_reward * 0.99 + t * 0.01
-        finish_episode()
-        if i_episode % args.log_interval == 0:
-            print('Episode {}\tLast length: {:5d}\tAverage length: {:.2f}'.format(
-                i_episode, t, running_reward))
+    running_length = running_length * 0.99 + t * 0.01
+    finish_episode()
+    if i_episode % args.log_interval == 0:
+        if current_reward > max_reward:
+            max_reward = current_reward
+            # torch.save(policy.state_dict(), 'weights/{}.pt'.format("reinforce_invaders"))
+        print('Episode {}\tLast length: {:5d}\tAverage length: {:.2f}\tReward: {:.5f}'.format(
+            i_episode, t, running_length, current_reward))
