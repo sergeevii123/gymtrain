@@ -34,8 +34,8 @@ parser.add_argument('--num-steps', type=int, default=20,
                     help='number of forward steps in A3C (default: 20)')
 parser.add_argument('--max-episode-length', type=int, default=1000000,
                     help='maximum length of an episode (default: 1000000)')
-parser.add_argument('--env-name', default='SpaceInvaders-v0',
-                    help='environment to train on (default: SpaceInvaders-v0)')
+parser.add_argument('--env-name', default='Pong-v0',
+                    help='environment to train on (default: Pong-v0)')
 parser.add_argument('--no-shared', default=False,
                     help='use an optimizer without shared momentum.')
 

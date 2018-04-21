@@ -29,7 +29,7 @@ parser.add_argument('--log-interval', type=int, default=10, metavar='N',
 args = parser.parse_args()
 
 
-env = make_atari('SpaceInvaders-v0')
+env = make_atari('Pong-v0')
 env.seed(args.seed)
 # if args.record:
 # env = wrappers.Monitor(env, './eval/reinforce', force=True)
@@ -60,7 +60,7 @@ class Policy(nn.Module):
         return F.softmax(action_scores, dim=1)
 
 
-policy = Policy(1, 6)
+policy = Policy(env.observation_space.shape[0], env.action_space.n)
 optimizer = optim.Adam(policy.parameters(), lr=1e-3)
 
 
@@ -103,7 +103,7 @@ for i_episode in count(1):
         action = select_action(np.array(state))
         state, reward, done, _ = env.step(action)
         # if args.render:
-        # env.render()
+        env.render()
         policy.rewards.append(reward)
         current_reward+=reward
         if done:
