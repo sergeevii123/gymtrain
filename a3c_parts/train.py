@@ -44,9 +44,9 @@ def train(rank, args, shared_model, counter, lock, optimizer=None):
 
         for step in range(args.num_steps):
             episode_length += 1
-            value, logit = model((Variable(state.unsqueeze(0))))
-            prob = F.softmax(logit)
-            log_prob = F.log_softmax(logit)
+            value, logit = model((Variable(state.float().unsqueeze(0))))
+            prob = F.softmax(logit, dim=-1)
+            log_prob = F.log_softmax(logit, dim=-1)
             entropy = -(log_prob * prob).sum(1, keepdim=True)
             entropies.append(entropy)
 
@@ -74,8 +74,7 @@ def train(rank, args, shared_model, counter, lock, optimizer=None):
 
         R = torch.zeros(1, 1)
         if not done:
-            print("here")
-            value, _, _ = model((Variable(state.unsqueeze(0))))
+            value, _ = model((Variable(state.float().unsqueeze(0))))
             R = value.data
 
         values.append(Variable(R))

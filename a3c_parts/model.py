@@ -18,7 +18,6 @@ class ActorCritic(torch.nn.Module):
         self.train()
 
     def forward(self, inputs):
-        print(inputs)
         x = F.elu(self.conv1(inputs))
         x = F.elu(self.conv2(x))
         x = F.elu(self.conv3(x))

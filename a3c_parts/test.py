@@ -29,20 +29,15 @@ def test(rank, args, shared_model, counter):
     # a quick hack to prevent the agent from stucking
     actions = deque(maxlen=100)
     episode_length = 0
+    max_reward = 0
     while True:
         episode_length += 1
         # Sync with the shared model
         if done:
             model.load_state_dict(shared_model.state_dict())
-            cx = Variable(torch.zeros(1, 256), volatile=True)
-            hx = Variable(torch.zeros(1, 256), volatile=True)
-        else:
-            cx = Variable(cx.data, volatile=True)
-            hx = Variable(hx.data, volatile=True)
 
-        value, logit, (hx, cx) = model((Variable(
-            state.unsqueeze(0), volatile=True), (hx, cx)))
-        prob = F.softmax(logit)
+        value, logit = model((Variable(state.float().unsqueeze(0), volatile=True)))
+        prob = F.softmax(logit, dim=-1)
         action = prob.max(1, keepdim=True)[1].data.numpy()
 
         state, reward, done, _ = env.step(action[0, 0])
@@ -60,6 +55,9 @@ def test(rank, args, shared_model, counter):
                               time.gmtime(time.time() - start_time)),
                 counter.value, counter.value / (time.time() - start_time),
                 reward_sum, episode_length))
+            if reward_sum > max_reward:
+                max_reward = reward_sum
+                torch.save(model.state_dict(), 'weights/{}.pt'.format("a3c_invaders"))
             reward_sum = 0
             episode_length = 0
             actions.clear()
