@@ -67,5 +67,5 @@ def test(rank, args, shared_model, counter):
             actions.clear()
             state = env.reset()
             time.sleep(60)
-
+        state = np.array(state)
         state = torch.from_numpy(state)
