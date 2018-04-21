@@ -148,6 +148,6 @@ def make_atari(env_id):
     env = gym.make(env_id)
     env = AtariRescale42x42(env)
     # env = NoopResetEnv(env, noop_max=30)
-    # env = MaxAndSkipEnv(env, skip=4)
-    env = FrameStack(env, 4)
+    env = MaxAndSkipEnv(env, skip=4)
+    # env = FrameStack(env, 4)
     return env
