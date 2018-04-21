@@ -29,7 +29,7 @@ def test(rank, args, shared_model, counter):
     # a quick hack to prevent the agent from stucking
     actions = deque(maxlen=100)
     episode_length = 0
-    max_reward = 0
+    max_reward = -100
     while True:
         episode_length += 1
         # Sync with the shared model
@@ -57,7 +57,7 @@ def test(rank, args, shared_model, counter):
                 reward_sum, episode_length))
             if reward_sum > max_reward:
                 max_reward = reward_sum
-                torch.save(model.state_dict(), 'weights/{}.pt'.format("a3c_invaders"))
+                torch.save(model.state_dict(), 'weights/{}.pt'.format("a3c_pong"))
             reward_sum = 0
             episode_length = 0
             actions.clear()
