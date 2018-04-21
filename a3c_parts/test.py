@@ -21,8 +21,8 @@ def test(rank, args, shared_model, counter):
     model.eval()
 
     state = env.reset()
-    state = torch.from_numpy(state)
     state = np.array(state)
+    state = torch.from_numpy(state)
     reward_sum = 0
     done = True
 

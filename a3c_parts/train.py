@@ -30,8 +30,9 @@ def train(rank, args, shared_model, counter, lock, optimizer=None):
     model.train()
 
     state = env.reset()
-    state = torch.from_numpy(state)
     state = np.array(state)
+    state = torch.from_numpy(state)
+
     done = True
 
     episode_length = 0
