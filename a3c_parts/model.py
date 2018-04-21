@@ -12,12 +12,11 @@ class ActorCritic(torch.nn.Module):
         self.conv3 = nn.Conv2d(32, 32, 3, stride=2, padding=1)
         self.conv4 = nn.Conv2d(32, 32, 3, stride=2, padding=1)
         self.affine1 = nn.Linear(32*3*11, 256)
-        self.critic_linear = nn.Linear(256, 1)
-        self.actor_linear = nn.Linear(256, action_space.n)
-        self.train()
+        self.action_head = nn.Linear(256, action_space.n)
+        self.value_head = nn.Linear(256, 1)
 
-    def forward(self, inputs):
-        x = F.elu(self.conv1(inputs))
+    def forward(self, x):
+        x = F.elu(self.conv1(x))
         x = F.elu(self.conv2(x))
         x = F.elu(self.conv3(x))
         x = F.elu(self.conv4(x))
