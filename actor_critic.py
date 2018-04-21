@@ -65,7 +65,7 @@ class Policy(nn.Module):
         return F.softmax(action_scores, dim=-1), state_values
 
 
-model = Policy(env.observation_space.shape[0], env.action_space)
+model = Policy(env.observation_space.shape[0], env.action_space.n)
 optimizer = optim.Adam(model.parameters(), lr=1e-3)
 
 
@@ -100,7 +100,7 @@ def finish_episode():
     del model.rewards[:]
     del model.saved_actions[:]
 
-# model.load_state_dict(torch.load('weights/{}.pt'.format("actor_critic_invaders")))
+# model.load_state_dict(torch.load('weights/{}.pt'.format("actor_critic_pong")))
 
 running_length = 10
 max_reward = -100
@@ -111,7 +111,7 @@ for i_episode in count(1):
         action = select_action(np.array(state))
         state, reward, done, _ = env.step(action)
         # if args.render:
-        env.render()
+        # env.render()
         model.rewards.append(reward)
         current_reward+=reward
         if done:

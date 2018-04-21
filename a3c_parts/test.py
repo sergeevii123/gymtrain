@@ -44,7 +44,7 @@ def test(rank, args, shared_model, counter):
 
         state, reward, done, _ = env.step(action[0, 0])
         state = np.array(state)
-        # env.render()
+        env.render()
         done = done or episode_length >= args.max_episode_length
         reward_sum += reward
 
