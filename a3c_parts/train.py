@@ -2,6 +2,7 @@ import torch
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.autograd import Variable
+import numpy as np
 
 from a3c_parts.model import ActorCritic
 from envs import make_atari
@@ -30,6 +31,7 @@ def train(rank, args, shared_model, counter, lock, optimizer=None):
 
     state = env.reset()
     state = torch.from_numpy(state)
+    state = np.array(state)
     done = True
 
     episode_length = 0
@@ -54,6 +56,7 @@ def train(rank, args, shared_model, counter, lock, optimizer=None):
             log_prob = log_prob.gather(1, Variable(action))
 
             state, reward, done, _ = env.step(action.numpy())
+            state = np.array(state)
             done = done or episode_length >= args.max_episode_length
             reward = max(min(reward, 1), -1)
 
@@ -63,6 +66,7 @@ def train(rank, args, shared_model, counter, lock, optimizer=None):
             if done:
                 episode_length = 0
                 state = env.reset()
+                state = np.array(state)
 
             state = torch.from_numpy(state)
             values.append(value)

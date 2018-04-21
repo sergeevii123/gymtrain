@@ -7,6 +7,7 @@ from torch.autograd import Variable
 
 from a3c_parts.model import ActorCritic
 from envs import make_atari
+import numpy as np
 
 
 def test(rank, args, shared_model, counter):
@@ -21,6 +22,7 @@ def test(rank, args, shared_model, counter):
 
     state = env.reset()
     state = torch.from_numpy(state)
+    state = np.array(state)
     reward_sum = 0
     done = True
 
@@ -41,6 +43,7 @@ def test(rank, args, shared_model, counter):
         action = prob.max(1, keepdim=True)[1].data.numpy()
 
         state, reward, done, _ = env.step(action[0, 0])
+        state = np.array(state)
         # env.render()
         done = done or episode_length >= args.max_episode_length
         reward_sum += reward
