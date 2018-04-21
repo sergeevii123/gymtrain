@@ -24,7 +24,7 @@ parser.add_argument('--cont', action='store_true',
                     help='continue from weights')
 parser.add_argument('--record', action='store_true',
                     help='save video')
-parser.add_argument('--log-interval', type=int, default=10, metavar='N',
+parser.add_argument('--log-interval', type=int, default=1, metavar='N',
                     help='interval between training status logs (default: 10)')
 args = parser.parse_args()
 
@@ -43,7 +43,7 @@ class Policy(nn.Module):
         self.conv2 = nn.Conv2d(32, 32, 3, stride=2, padding=1)
         self.conv3 = nn.Conv2d(32, 32, 3, stride=2, padding=1)
         self.conv4 = nn.Conv2d(32, 32, 3, stride=2, padding=1)
-        self.affine1 = nn.Linear(32*3*3, 256)
+        self.affine1 = nn.Linear(32*3*11, 256)
         self.affine2 = nn.Linear(256, action_space)
 
         self.saved_log_probs = []
@@ -54,7 +54,7 @@ class Policy(nn.Module):
         x = F.elu(self.conv2(x))
         x = F.elu(self.conv3(x))
         x = F.elu(self.conv4(x))
-        x = x.view(-1, 32*3*3)
+        x = x.view(-1, 32*3*11)
         x = F.elu(self.affine1(x))
         action_scores = self.affine2(x)
         return F.softmax(action_scores, dim=1)
@@ -95,7 +95,7 @@ def finish_episode():
 # policy.load_state_dict(torch.load('weights/{}.pt'.format("reinforce_invaders")))
 
 running_length = 10
-max_reward = 0
+max_reward = -100
 for i_episode in count(1):
     state = env.reset()
     current_reward = 0
@@ -103,7 +103,7 @@ for i_episode in count(1):
         action = select_action(np.array(state))
         state, reward, done, _ = env.step(action)
         # if args.render:
-        env.render()
+        # env.render()
         policy.rewards.append(reward)
         current_reward+=reward
         if done:
@@ -114,6 +114,6 @@ for i_episode in count(1):
     if i_episode % args.log_interval == 0:
         if current_reward > max_reward:
             max_reward = current_reward
-            # torch.save(policy.state_dict(), 'weights/{}.pt'.format("reinforce_invaders"))
+            torch.save(policy.state_dict(), 'weights/{}.pt'.format("reinforce_pong"))
         print('Episode {}\tLast length: {:5d}\tAverage length: {:.2f}\tReward: {:.5f}'.format(
             i_episode, t, running_length, current_reward))
