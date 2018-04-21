@@ -1,5 +1,4 @@
 eval/
-weights/
 *.pyc
 *.pyo
 .idea
