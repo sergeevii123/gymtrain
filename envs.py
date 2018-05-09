@@ -144,10 +144,25 @@ class MaxAndSkipEnv(gym.Wrapper):
     def reset(self, **kwargs):
         return self.env.reset(**kwargs)
 
+class WarpFrame(gym.ObservationWrapper):
+    def __init__(self, env):
+        """Warp frames to 84x84 as done in the Nature paper and later work."""
+        gym.ObservationWrapper.__init__(self, env)
+        self.width = 84
+        self.height = 84
+        self.observation_space = spaces.Box(low=0, high=255,
+            shape=(self.height, self.width, 1), dtype=np.uint8)
+
+    def observation(self, frame):
+        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
+        frame = cv2.resize(frame, (self.width, self.height), interpolation=cv2.INTER_AREA)
+        return frame[:, :, None]
+
 def make_atari(env_id):
     env = gym.make(env_id)
-    env = AtariRescale42x42(env)
-    # env = NoopResetEnv(env, noop_max=30)
+    # env = AtariRescale42x42(env)
+    env = WarpFrame(env)
+    env = NoopResetEnv(env, noop_max=30)
     # env = MaxAndSkipEnv(env, skip=4)
     env = FrameStack(env, 4)
     return env
