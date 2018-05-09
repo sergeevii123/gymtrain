@@ -7,7 +7,7 @@ from gym import spaces
 
 
 def _process_frame42(frame):
-    frame = frame[34:34 + 160, :160]
+    # frame = frame[34:34 + 160, :160]
     # Resize by half, then down to 42x42 (essentially mipmapping). If
     # we resize directly we lose pixels that, when mapped to 42x42,
     # aren't close enough to the pixel boundary.
@@ -175,8 +175,7 @@ class WarpFrame(gym.ObservationWrapper):
 
 def make_atari(env_id):
     env = gym.make(env_id)
-    env = WarpFrame(env)
-    env = ScaledFloatFrame(env)
+    env = AtariRescale42x42(env)
     env = NoopResetEnv(env, noop_max=30)
     # env = MaxAndSkipEnv(env, skip=4)
     env = FrameStack(env, 4)
