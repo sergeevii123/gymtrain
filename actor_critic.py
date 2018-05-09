@@ -46,7 +46,7 @@ class Policy(nn.Module):
         self.conv2 = nn.Conv2d(32, 32, 3, stride=2, padding=1)
         self.conv3 = nn.Conv2d(32, 32, 3, stride=2, padding=1)
         self.conv4 = nn.Conv2d(32, 32, 3, stride=2, padding=1)
-        self.affine1 = nn.Linear(32*3*11, 256)
+        self.affine1 = nn.Linear(192, 256)
         self.action_head = nn.Linear(256, action_space)
         self.value_head = nn.Linear(256, 1)
 
@@ -58,7 +58,7 @@ class Policy(nn.Module):
         x = F.elu(self.conv2(x))
         x = F.elu(self.conv3(x))
         x = F.elu(self.conv4(x))
-        x = x.view(-1, 32*3*11)
+        x = x.view(-1, 192)
         x = F.elu(self.affine1(x))
         action_scores = self.action_head(x)
         state_values = self.value_head(x)
