@@ -12,6 +12,7 @@ import torch.optim as optim
 from torch.autograd import Variable
 from torch.distributions import Categorical
 from envs import make_atari
+from models.actor_critic import Policy
 
 parser = argparse.ArgumentParser(description='PyTorch actor-critic example')
 parser.add_argument('--gamma', type=float, default=0.99, metavar='G',
@@ -20,7 +21,7 @@ parser.add_argument('--seed', type=int, default=42, metavar='N',
                     help='random seed (default: 1)')
 parser.add_argument('--render', action='store_true',
                     help='render the environment')
-parser.add_argument('--log-interval', type=int, default=10, metavar='N',
+parser.add_argument('--log-interval', type=int, default=1, metavar='N',
                     help='interval between training status logs (default: 10)')
 parser.add_argument('--cont', action='store_true',
                     help='continue from weights')
@@ -37,33 +38,6 @@ torch.manual_seed(args.seed)
 
 
 SavedAction = namedtuple('SavedAction', ['log_prob', 'value'])
-
-
-class Policy(nn.Module):
-    def __init__(self, num_inputs, action_space):
-        super(Policy, self).__init__()
-        self.conv1 = nn.Conv2d(num_inputs, 32, 3, stride=2, padding=1)
-        self.conv2 = nn.Conv2d(32, 32, 3, stride=2, padding=1)
-        self.conv3 = nn.Conv2d(32, 32, 3, stride=2, padding=1)
-        self.conv4 = nn.Conv2d(32, 32, 3, stride=2, padding=1)
-        self.affine1 = nn.Linear(32*3*11, 256)
-        self.action_head = nn.Linear(256, action_space)
-        self.value_head = nn.Linear(256, 1)
-
-        self.saved_actions = []
-        self.rewards = []
-
-    def forward(self, x):
-        x = F.elu(self.conv1(x))
-        x = F.elu(self.conv2(x))
-        x = F.elu(self.conv3(x))
-        x = F.elu(self.conv4(x))
-        x = x.view(-1, 32*3*11)
-        x = F.elu(self.affine1(x))
-        action_scores = self.action_head(x)
-        state_values = self.value_head(x)
-        return F.softmax(action_scores, dim=-1), state_values
-
 
 model = Policy(env.observation_space.shape[0], env.action_space.n)
 optimizer = optim.Adam(model.parameters(), lr=1e-3)
@@ -122,6 +96,6 @@ for i_episode in count(1):
     if i_episode % args.log_interval == 0:
         if current_reward > max_reward:
             max_reward = current_reward
-            torch.save(model.state_dict(), 'weights/{}.pt'.format("actor_critic_pong"))
+            # torch.save(model.state_dict(), 'weights/{}.pt'.format("actor_critic_pong"))
         print('Episode {}\tLast length: {:5d}\tAverage length: {:.2f}\tReward: {:.5f}'.format(
             i_episode, t, running_length, current_reward))

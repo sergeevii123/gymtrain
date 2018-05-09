@@ -144,10 +144,40 @@ class MaxAndSkipEnv(gym.Wrapper):
     def reset(self, **kwargs):
         return self.env.reset(**kwargs)
 
+class ScaledFloatFrame(gym.ObservationWrapper):
+    def __init__(self, env):
+        gym.ObservationWrapper.__init__(self, env)
+
+    def observation(self, observation):
+        # careful! This undoes the memory optimization, use
+        # with smaller replay buffers only.
+        return np.array(observation).astype(np.float32) / 255.0
+
+class WarpFrame(gym.ObservationWrapper):
+    def __init__(self, env, gray=True):
+        """Warp frames to 84x84 as done in the Nature paper and later work."""
+        gym.ObservationWrapper.__init__(self, env)
+        self.width = 84
+        self.height = 84
+        self.gray = gray
+        n_ch = 1 if gray else 3
+        self.observation_space = spaces.Box(
+            low=0, high=255, shape=(self.height, self.width, n_ch), dtype=np.uint8)
+
+    def observation(self, frame):
+        if self.gray:
+            frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
+        frame = cv2.resize(frame, (self.width, self.height), interpolation=cv2.INTER_AREA).\
+            reshape(self.height, self.width, -1)
+
+        return frame
+
+
 def make_atari(env_id):
     env = gym.make(env_id)
-    env = AtariRescale42x42(env)
-    # env = NoopResetEnv(env, noop_max=30)
-    env = MaxAndSkipEnv(env, skip=4)
-    # env = FrameStack(env, 4)
+    env = WarpFrame(env)
+    env = ScaledFloatFrame(env)
+    env = NoopResetEnv(env, noop_max=30)
+    # env = MaxAndSkipEnv(env, skip=4)
+    env = FrameStack(env, 4)
     return env
