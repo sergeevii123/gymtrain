@@ -58,7 +58,7 @@ class Policy(nn.Module):
         x = F.elu(self.conv2(x))
         x = F.elu(self.conv3(x))
         x = F.elu(self.conv4(x))
-        x = x.view(-1, 256)
+        x = x.view(-1, 192)
         x = F.elu(self.affine1(x))
         action_scores = self.action_head(x)
         state_values = self.value_head(x)
