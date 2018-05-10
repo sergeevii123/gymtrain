@@ -158,10 +158,20 @@ class WarpFrame(gym.ObservationWrapper):
         frame = cv2.resize(frame, (self.width, self.height), interpolation=cv2.INTER_AREA)
         return frame[:, :, None]
 
+class ScaledFloatFrame(gym.ObservationWrapper):
+    def __init__(self, env):
+        gym.ObservationWrapper.__init__(self, env)
+
+    def observation(self, observation):
+        # careful! This undoes the memory optimization, use
+        # with smaller replay buffers only.
+        return np.array(observation).astype(np.float32) / 255.0
+
 def make_atari(env_id):
     env = gym.make(env_id)
     # env = AtariRescale42x42(env)
     env = WarpFrame(env)
+    env = ScaledFloatFrame(env)
     env = NoopResetEnv(env, noop_max=30)
     # env = MaxAndSkipEnv(env, skip=4)
     env = FrameStack(env, 4)
