@@ -39,42 +39,16 @@ torch.manual_seed(args.seed)
 SavedAction = namedtuple('SavedAction', ['log_prob', 'value'])
 
 
-class Policy(nn.Module):
-    def __init__(self, num_inputs, action_space):
-        super(Policy, self).__init__()
-        self.conv1 = nn.Conv2d(num_inputs, 32, 3, stride=2, padding=1)
-        self.conv2 = nn.Conv2d(32, 32, 3, stride=2, padding=1)
-        self.conv3 = nn.Conv2d(32, 32, 3, stride=2, padding=1)
-        self.conv4 = nn.Conv2d(32, 32, 3, stride=2, padding=1)
-        self.affine1 = nn.Linear(192, 128)
-        self.action_head = nn.Linear(128, action_space)
-        self.value_head = nn.Linear(128, 1)
-
-        self.saved_actions = []
-        self.rewards = []
-
-    def forward(self, x):
-        x = F.elu(self.conv1(x))
-        x = F.elu(self.conv2(x))
-        x = F.elu(self.conv3(x))
-        x = F.elu(self.conv4(x))
-        x = x.view(-1, 192)
-        x = F.elu(self.affine1(x))
-        action_scores = self.action_head(x)
-        state_values = self.value_head(x)
-        return F.softmax(action_scores, dim=-1), state_values
-
-#
 # class Policy(nn.Module):
 #     def __init__(self, num_inputs, action_space):
 #         super(Policy, self).__init__()
 #         self.conv1 = nn.Conv2d(num_inputs, 32, 3, stride=2, padding=1)
-#         self.conv2 = nn.Conv2d(32, 64, 3, stride=2, padding=1)
-#         self.conv3 = nn.Conv2d(64, 64, 3, stride=2, padding=1)
-#         self.conv4 = nn.Conv2d(64, 64, 3, stride=1, padding=1)
-#         self.affine1 = nn.Linear(704, 512)
-#         self.action_head = nn.Linear(512, action_space)
-#         self.value_head = nn.Linear(512, 1)
+#         self.conv2 = nn.Conv2d(32, 32, 3, stride=2, padding=1)
+#         self.conv3 = nn.Conv2d(32, 32, 3, stride=2, padding=1)
+#         self.conv4 = nn.Conv2d(32, 32, 3, stride=2, padding=1)
+#         self.affine1 = nn.Linear(192, 128)
+#         self.action_head = nn.Linear(128, action_space)
+#         self.value_head = nn.Linear(128, 1)
 #
 #         self.saved_actions = []
 #         self.rewards = []
@@ -84,11 +58,37 @@ class Policy(nn.Module):
 #         x = F.elu(self.conv2(x))
 #         x = F.elu(self.conv3(x))
 #         x = F.elu(self.conv4(x))
-#         x = x.view(-1, 704)
+#         x = x.view(-1, 192)
 #         x = F.elu(self.affine1(x))
 #         action_scores = self.action_head(x)
 #         state_values = self.value_head(x)
 #         return F.softmax(action_scores, dim=-1), state_values
+
+
+class Policy(nn.Module):
+    def __init__(self, num_inputs, action_space):
+        super(Policy, self).__init__()
+        self.conv1 = nn.Conv2d(num_inputs, 32, 3, stride=2, padding=1)
+        self.conv2 = nn.Conv2d(32, 64, 3, stride=2, padding=1)
+        self.conv3 = nn.Conv2d(64, 64, 3, stride=2, padding=1)
+        self.conv4 = nn.Conv2d(64, 64, 3, stride=1, padding=1)
+        self.affine1 = nn.Linear(704, 512)
+        self.action_head = nn.Linear(512, action_space)
+        self.value_head = nn.Linear(512, 1)
+
+        self.saved_actions = []
+        self.rewards = []
+
+    def forward(self, x):
+        x = F.elu(self.conv1(x))
+        x = F.elu(self.conv2(x))
+        x = F.elu(self.conv3(x))
+        x = F.elu(self.conv4(x))
+        x = x.view(-1, 704)
+        x = F.elu(self.affine1(x))
+        action_scores = self.action_head(x)
+        state_values = self.value_head(x)
+        return F.softmax(action_scores, dim=-1), state_values
 
 
 model = Policy(env.observation_space.shape[0], env.action_space.n)
