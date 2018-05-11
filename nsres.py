@@ -59,7 +59,9 @@ def do_rollouts(args, models, random_seeds, return_queue, env, are_negative):
         this_model_return = 0
         this_model_num_frames = 0
         # Rollout
-        for step in range(args.max_episode_length):
+        done = False
+        # for step in range(args.max_episode_length):
+        while not done:
             logit = model((Variable(state.unsqueeze(0), volatile=True)))
 
             prob = F.softmax(logit, dim=-1)
@@ -303,8 +305,8 @@ def train_loop(args, synced_model, env, chkpt_dir):
         synced_model = gradient_update(args, synced_model, results, seeds,
                                        neg_list, num_eps, total_num_frames,
                                        chkpt_dir, unperturbed_results)
-        if args.variable_ep_len:
-            args.max_episode_length = int(2 * sum(num_frames) / len(num_frames))
+        # if args.variable_ep_len:
+        #     args.max_episode_length = int(2 * sum(num_frames) / len(num_frames))
 
 
 parser = argparse.ArgumentParser(description='ES')
@@ -318,7 +320,7 @@ parser.add_argument('--sigma', type=float, default=0.05, metavar='SD',
                     help='noise standard deviation')
 parser.add_argument('--useAdam', action='store_true',
                     help='bool to determine if to use adam optimizer')
-parser.add_argument('--n', type=int, default=10, metavar='N',
+parser.add_argument('--n', type=int, default=20, metavar='N',
                     help='batch size, must be even')
 parser.add_argument('--max-episode-length', type=int, default=100000,
                     metavar='MEL', help='maximum length of an episode')
