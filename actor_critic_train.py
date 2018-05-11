@@ -46,9 +46,9 @@ class Policy(nn.Module):
         self.conv2 = nn.Conv2d(32, 32, 3, stride=2, padding=1)
         self.conv3 = nn.Conv2d(32, 32, 3, stride=2, padding=1)
         self.conv4 = nn.Conv2d(32, 32, 3, stride=2, padding=1)
-        self.affine1 = nn.Linear(32*3*11, 512)
-        self.action_head = nn.Linear(512, action_space)
-        self.value_head = nn.Linear(512, 1)
+        self.affine1 = nn.Linear(32*3*11, 256)
+        self.action_head = nn.Linear(256, action_space)
+        self.value_head = nn.Linear(256, 1)
 
         self.saved_actions = []
         self.rewards = []
