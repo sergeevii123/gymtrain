@@ -123,8 +123,6 @@ def finish_episode():
     del model.rewards[:]
     del model.saved_actions[:]
 
-# model.load_state_dict(torch.load('weights/{}.pt'.format("actor_critic_pong")))
-
 running_length = 10
 max_reward = -100
 for i_episode in count(1):
@@ -133,8 +131,6 @@ for i_episode in count(1):
     for t in range(10000):
         action = select_action(np.array(state))
         state, reward, done, _ = env.step(action)
-        # if args.render:
-        # env.render()
         model.rewards.append(reward)
         current_reward+=reward
         if done:
@@ -145,6 +141,6 @@ for i_episode in count(1):
     if i_episode % args.log_interval == 0:
         if current_reward > max_reward:
             max_reward = current_reward
-            # torch.save(model.state_dict(), 'weights/{}.pt'.format("actor_critic_pong"))
+            torch.save(model.state_dict(), 'weights/{}.pt'.format("actor_critic_pong"))
         print('Episode {}\tLast length: {:5d}\tAverage length: {:.2f}\tReward: {:.5f}'.format(
             i_episode, t, running_length, current_reward))
