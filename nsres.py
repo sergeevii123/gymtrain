@@ -21,19 +21,19 @@ class ES(torch.nn.Module):
         """
         super(ES, self).__init__()
         num_outputs = action_space.n
-        self.conv1 = nn.Conv2d(num_inputs, 32, 3, stride=2, padding=1)
-        self.conv2 = nn.Conv2d(32, 32, 3, stride=2, padding=1)
+        self.conv1 = nn.Conv2d(4, 16, 3, stride=2, padding=1)
+        self.conv2 = nn.Conv2d(16, 32, 3, stride=2, padding=1)
         self.conv3 = nn.Conv2d(32, 32, 3, stride=2, padding=1)
         self.conv4 = nn.Conv2d(32, 32, 3, stride=2, padding=1)
-        self.affine1 = nn.Linear(32 * 3 * 11, 256)
-        self.actor_linear = nn.Linear(256, num_outputs)
+        self.affine1 = nn.Linear(32 * 3 * 3, 512)
+        self.actor_linear = nn.Linear(512, num_outputs)
 
     def forward(self, inputs):
         x = F.selu(self.conv1(inputs))
         x = F.selu(self.conv2(x))
         x = F.selu(self.conv3(x))
         x = F.selu(self.conv4(x))
-        x = x.view(-1, 32 * 3 * 11)
+        x = x.view(-1, 32 * 3 * 3)
         x = F.selu(self.affine1(x))
         return self.actor_linear(x)
 
@@ -320,7 +320,7 @@ parser.add_argument('--sigma', type=float, default=0.05, metavar='SD',
                     help='noise standard deviation')
 parser.add_argument('--useAdam', action='store_true',
                     help='bool to determine if to use adam optimizer')
-parser.add_argument('--n', type=int, default=20, metavar='N',
+parser.add_argument('--n', type=int, default=100, metavar='N',
                     help='batch size, must be even')
 parser.add_argument('--max-episode-length', type=int, default=100000,
                     metavar='MEL', help='maximum length of an episode')
