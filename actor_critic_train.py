@@ -115,7 +115,7 @@ for i_episode in count(1):
     running_length = running_length * 0.99 + t * 0.01
     finish_episode()
     if i_episode % args.log_interval == 0:
-        if current_reward > max_reward:
+        if current_reward >= max_reward:
             max_reward = current_reward
             torch.save(model.state_dict(), 'weights/{}.pt'.format("actor_critic_pong"))
         print('Episode {}\tLast length: {:5d}\tAverage length: {:.2f}\tReward: {:.5f}'.format(
