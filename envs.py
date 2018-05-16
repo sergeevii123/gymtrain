@@ -44,15 +44,19 @@ class NoopResetEnv(gym.Wrapper):
     def step(self, ac):
         return self.env.step(ac)
 
+class WarpFrame(gym.ObservationWrapper):
+    def __init__(self, env):
+        """Warp frames to 84x84 as done in the Nature paper and later work."""
+        gym.ObservationWrapper.__init__(self, env)
+        self.width = 84
+        self.height = 84
+        self.observation_space = spaces.Box(low=0, high=255,
+            shape=(self.height, self.width, 1), dtype=np.uint8)
 
-class AtariRescale84x84(gym.ObservationWrapper):
-    def __init__(self, env=None):
-        super(AtariRescale84x84, self).__init__(env)
-        self.observation_space = Box(0.0, 1.0, [1, 84, 84])
-
-    def observation(self, observation):
-        return _process_frame84(observation)
-
+    def observation(self, frame):
+        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
+        frame = cv2.resize(frame, (self.width, self.height), interpolation=cv2.INTER_AREA)
+        return frame[:, :, None]
 
 class FrameStack(gym.Wrapper):
     def __init__(self, env, k):
@@ -66,7 +70,7 @@ class FrameStack(gym.Wrapper):
         self.k = k
         self.frames = deque([], maxlen=k)
         shp = env.observation_space.shape
-        self.observation_space = spaces.Box(low=0, high=255, shape=(shp[0] * k, shp[1], shp[2]), dtype=np.uint8)
+        self.observation_space = spaces.Box(low=0, high=255, shape=(shp[0], shp[1], shp[2] * k), dtype=np.uint8)
 
     def reset(self):
         ob = self.env.reset()
@@ -81,7 +85,16 @@ class FrameStack(gym.Wrapper):
 
     def _get_ob(self):
         assert len(self.frames) == self.k
-        return np.array(LazyFrames(list(self.frames))).reshape(self.k, self.frames[0].shape[1], self.frames[0].shape[2])
+        return LazyFrames(list(self.frames))
+
+class ScaledFloatFrame(gym.ObservationWrapper):
+    def __init__(self, env):
+        gym.ObservationWrapper.__init__(self, env)
+
+    def observation(self, observation):
+        # careful! This undoes the memory optimization, use
+        # with smaller replay buffers only.
+        return np.array(observation).astype(np.float32) / 255.0
 
 class LazyFrames(object):
     def __init__(self, frames):
@@ -113,7 +126,7 @@ class LazyFrames(object):
 
 def make_atari(env_id):
     env = gym.make(env_id)
-    env = AtariRescale84x84(env)
-    # env = NoopResetEnv(env, noop_max=30)
+    env = WarpFrame(env)
+    env = NoopResetEnv(env, noop_max=30)
     env = FrameStack(env, 4)
     return env

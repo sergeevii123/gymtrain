@@ -53,6 +53,7 @@ class Policy(nn.Module):
         self.rewards = []
 
     def forward(self, x):
+        x = x.view(1, -1, 84, 84)
         x = F.elu(self.conv1(x))
         x = F.elu(self.conv2(x))
         x = F.elu(self.conv3(x))
