@@ -6,13 +6,9 @@ from collections import deque
 from gym import spaces
 
 
-def _process_frame42(frame):
+def _process_frame84(frame):
     frame = frame[34:34 + 160, :160]
-    # Resize by half, then down to 42x42 (essentially mipmapping). If
-    # we resize directly we lose pixels that, when mapped to 42x42,
-    # aren't close enough to the pixel boundary.
-    frame = cv2.resize(frame, (80, 80))
-    frame = cv2.resize(frame, (42, 42))
+    frame = cv2.resize(frame, (84, 84))
     frame = frame.mean(2, keepdims=True)
     frame = frame.astype(np.float32)
     frame *= (1.0 / 255.0)
@@ -49,13 +45,13 @@ class NoopResetEnv(gym.Wrapper):
         return self.env.step(ac)
 
 
-class AtariRescale42x42(gym.ObservationWrapper):
+class AtariRescale84x84(gym.ObservationWrapper):
     def __init__(self, env=None):
-        super(AtariRescale42x42, self).__init__(env)
-        self.observation_space = Box(0.0, 1.0, [1, 42, 42])
+        super(AtariRescale84x84, self).__init__(env)
+        self.observation_space = Box(0.0, 1.0, [1, 84, 84])
 
     def observation(self, observation):
-        return _process_frame42(observation)
+        return _process_frame84(observation)
 
 
 class FrameStack(gym.Wrapper):
@@ -117,7 +113,7 @@ class LazyFrames(object):
 
 def make_atari(env_id):
     env = gym.make(env_id)
-    env = AtariRescale42x42(env)
+    env = AtariRescale84x84(env)
     # env = NoopResetEnv(env, noop_max=30)
     env = FrameStack(env, 4)
     return env

@@ -21,19 +21,17 @@ class ES(torch.nn.Module):
         """
         super(ES, self).__init__()
         num_outputs = action_space.n
-        self.conv1 = nn.Conv2d(4, 16, 3, stride=2, padding=1)
-        self.conv2 = nn.Conv2d(16, 32, 3, stride=2, padding=1)
-        self.conv3 = nn.Conv2d(32, 32, 3, stride=2, padding=1)
-        self.conv4 = nn.Conv2d(32, 32, 3, stride=2, padding=1)
-        self.affine1 = nn.Linear(32 * 3 * 3, 512)
+        self.conv1 = nn.Conv2d(4, 32, 8, stride=4, padding=1)
+        self.conv2 = nn.Conv2d(32, 64, 4, stride=2, padding=1)
+        self.conv3 = nn.Conv2d(64, 64, 3, stride=1, padding=1)
+        self.affine1 = nn.Linear(64 * 5 * 5, 512)
         self.actor_linear = nn.Linear(512, num_outputs)
 
     def forward(self, inputs):
         x = F.selu(self.conv1(inputs))
         x = F.selu(self.conv2(x))
         x = F.selu(self.conv3(x))
-        x = F.selu(self.conv4(x))
-        x = x.view(-1, 32 * 3 * 3)
+        x = x.view(-1, 64 * 5 * 5)
         x = F.selu(self.affine1(x))
         return self.actor_linear(x)
 
@@ -168,47 +166,47 @@ def gradient_update(args, synced_model, returns, random_seeds, neg_list,
     # For each model, generate the same random numbers as we did
     # before, and update parameters. We apply weight decay once.
     # if args.useAdam:
-    globalGrads = None
+    # globalGrads = None
+    # for i in range(args.n):
+    #     np.random.seed(random_seeds[i])
+    #     multiplier = -1 if neg_list[i] else 1
+    #     reward = shaped_returns[i]
+    #
+    #     localGrads = []
+    #     idx = 0
+    #     for k, v in synced_model.es_params():
+    #         eps = np.random.normal(0, 1, v.size())
+    #         grad = torch.from_numpy((args.n * args.sigma) * (reward * multiplier * eps)).float()
+    #
+    #         localGrads.append(grad)
+    #
+    #         if len(optimConfig) == idx:
+    #             optimConfig.append({'learningRate': args.lr})
+    #         idx = idx + 1
+    #
+    #     if globalGrads == None:
+    #         globalGrads = localGrads
+    #     else:
+    #         for i in range(len(globalGrads)):
+    #             globalGrads[i] = torch.add(globalGrads[i], localGrads[i])
+    # # print(globalGrads)
+    # idx = 0
+    # for k, v in synced_model.es_params():
+    #     r, _ = legacyOptim.adam(lambda x: (1, -globalGrads[idx]), v, optimConfig[idx])
+    #     v.copy_(r)
+    #     idx = idx + 1
+    # else:
+    #     # For each model, generate the same random numbers as we did
+    #     # before, and update parameters. We apply weight decay once.
     for i in range(args.n):
         np.random.seed(random_seeds[i])
         multiplier = -1 if neg_list[i] else 1
         reward = shaped_returns[i]
-
-        localGrads = []
-        idx = 0
         for k, v in synced_model.es_params():
             eps = np.random.normal(0, 1, v.size())
-            grad = torch.from_numpy((args.n * args.sigma) * (reward * multiplier * eps)).float()
-
-            localGrads.append(grad)
-
-            if len(optimConfig) == idx:
-                optimConfig.append({'learningRate': args.lr})
-            idx = idx + 1
-
-        if globalGrads == None:
-            globalGrads = localGrads
-        else:
-            for i in range(len(globalGrads)):
-                globalGrads[i] = torch.add(globalGrads[i], localGrads[i])
-    # print(globalGrads)
-    idx = 0
-    for k, v in synced_model.es_params():
-        r, _ = legacyOptim.adam(lambda x: (1, -globalGrads[idx]), v, optimConfig[idx])
-        v.copy_(r)
-        idx = idx + 1
-    # else:
-    #     # For each model, generate the same random numbers as we did
-    #     # before, and update parameters. We apply weight decay once.
-    #     for i in range(args.n):
-    #         np.random.seed(random_seeds[i])
-    #         multiplier = -1 if neg_list[i] else 1
-    #         reward = shaped_returns[i]
-    #         for k, v in synced_model.es_params():
-    #             eps = np.random.normal(0, 1, v.size())
-    #             v += torch.from_numpy(args.lr / (args.n * args.sigma) *
-    #                                   (reward * multiplier * eps)).float()
-    #     args.lr *= args.lr_decay
+            v += torch.from_numpy(args.lr / (args.n * args.sigma) *
+                                  (reward * multiplier * eps)).float()
+    args.lr *= args.lr_decay
 
     torch.save(synced_model.state_dict(),
                os.path.join("weights", 'es.pth'))
@@ -320,7 +318,7 @@ parser.add_argument('--sigma', type=float, default=0.05, metavar='SD',
                     help='noise standard deviation')
 parser.add_argument('--useAdam', action='store_true',
                     help='bool to determine if to use adam optimizer')
-parser.add_argument('--n', type=int, default=100, metavar='N',
+parser.add_argument('--n', type=int, default=20, metavar='N',
                     help='batch size, must be even')
 parser.add_argument('--max-episode-length', type=int, default=100000,
                     metavar='MEL', help='maximum length of an episode')
